@@ -1,8 +1,9 @@
 ## 編集対象のSwaggerファイル
-https://github.com/QitzPub/Qitz_Photo_2/tree/main/docs
+https://qitzpub.github.io/swagger_sample/swagger.yml
 
 ## SwaggerUIはこちら
-https://qitzpub.github.io/QitzSwaggerUI/?yaml_url=https://raw.githubusercontent.com/QitzPub/Qitz_Photo_2/main/docs/swagger.yaml?token=GHSAT0AAAAAACMOUAH4ZE7PXQZSENCJS5UEZNQWDRQ
+https://qitzpub.github.io/QitzSwaggerUI/?yaml_url=https://qitzpub.github.io/swagger_sample/swagger.yml
+
 ↓<br>
 https://qitzpub.github.io/QitzSwaggerUI/?yaml_url=
 <br>
