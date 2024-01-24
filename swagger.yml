@@ -1,0 +1,463 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.0.0"
+  title: "フォトライブラリー・API"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "photo.osaka-info.jp"
+basePath: "/v1/"
+tags:
+#- name: "photo_api"
+#  description: "WordPress上のフォトライブラリーのコンテンツ系API群"
+- name: "common"
+  description: "フロント・バックオフィス共通"
+- name: "front"
+  description: "フロント画面用"
+  externalDocs:
+    description: "フロント画面で使うAPI"
+    url: "http://swagger.io"
+- name: "admin"
+  description: "バックオフィス画面用"
+  externalDocs:
+    description: "バックオフィスで使うAPI"
+    url: "http://swagger.io"
+schemes:
+- "https"
+- "http"
+paths:
+  /news:
+    get:
+      tags:
+      - "front"
+      summary: "News一覧"
+      description: "Newsデータの最新ｎ件を取得"
+      operationId: "news"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "成功レスポンス"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/News"
+        "404":
+          description: "データが１件もない"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+  /content:
+    get:
+      tags:
+      - "common"
+      summary: "コンテンツ検索"
+      description: "色々な検索条件を指定して該当したコンテンツを検索する"
+      operationId: "findContents"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "s"
+        in: "query"
+        description: "フリーワード検索で指定したフリーワード"
+        required: false
+        type: "string"
+      - name: "type"
+        in: "query"
+        description: "コンテンツタイプを指定。photo|movie"
+        required: false
+        type: "string"
+      - name: "genre"
+        in: "query"
+        description: "検索したいジャンル名を指定"
+        required: false
+        type: "string"
+      - name: "area"
+        in: "query"
+        description: "検索したいエリア名を指定"
+        required: false
+        type: "string"
+      - name: "season"
+        in: "query"
+        description: "検索したい季節名を指定"
+        required: false
+        type: "string"
+      - name: "sort"
+        in: "query"
+        description: "コンテンツ表示順を降順にする項目名を指定。未指定時はID順。フロント使用時はupdated_at|popularのいずれかを必須。"
+        required: false
+        type: "string"
+      - name: "page_count"
+        in: "query"
+        description: "1ページ辺り何件のコンテンツを取得したいかを指定"
+        required: true
+        type: "integer"
+      - name: "page"
+        in: "query"
+        description: "何ページを取得したいかを指定"
+        required: true
+        type: "integer"
+      - name: "status"
+        in: "query"
+        description: "設定値はpublicかprivate"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "成功レスポンス"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Content"
+            properties:
+              src:
+                type: "string"
+                description: "コンテンツのURL"
+              page:
+                type: "integer"
+                description: "レスポンスしたページ数"
+              next:
+                type: "boolean"
+                description: "次ページの有無"
+              prev:
+                type: "boolean"
+                description: "前ページの有無"
+              count:
+                type: "integer"
+                description: "検索条件に該当したコンテンツ総件数"
+        "404":
+          description: "該当データなし"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+  /page-view-add/{contentId}:
+    get:
+      tags:
+      - "front"
+      summary: "ページビューインクリメント"
+      description: "指定コンテンツIDのページビューを+1する"
+      operationId: "addPageView"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "contentId"
+        in: "path"
+        description: "contents.id"
+        required: true
+        type: "integer"
+      responses:
+        "200":
+          $ref: "#/definitions/SuccessResponse"
+        "400":
+          description: "ID値として不正な値"
+          schema:
+            type: "object"
+            properties:
+              result:
+                type: "string"
+                example: "ID値は数値で指定してください。"
+        "404":
+          description: "該当データなし"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+  /content/{contentId}:
+    get:
+      tags:
+      - "common"
+      summary: "IDでコンテンツを検索"
+      description: "1コンテンツ分のデータを返す"
+      operationId: "getContentById"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "contentId"
+        in: "path"
+        required: true
+        type: "integer"
+      responses:
+        "200":
+          description: "成功レスポンス"
+          schema:
+            $ref: "#/definitions/Content"
+        "400":
+          description: "ID値として不正な値"
+          schema:
+            type: "object"
+            properties:
+              result:
+                type: "string"
+                example: "ID値は数値で指定してください。"
+        "404":
+          description: "該当データなし"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+  /content-relation/{contentId}:
+    get:
+      tags:
+      - "front"
+      summary: "関連コンテンツ取得"
+      description: "contents.idを指定して該当したコンテンツの関連コンテンツを返す"
+      operationId: "findRelationContents"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "contentId"
+        in: "path"
+        required: true
+        type: "integer"
+      responses:
+        "200":
+          description: "成功レスポンス"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Content"
+        "400":
+          description: "ID値として不正な値"
+          schema:
+            type: "object"
+            properties:
+              result:
+                type: "string"
+                example: "ID値は数値で指定してください。"
+        "404":
+          description: "該当データなし"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+  /billing:
+    get:
+      tags:
+      - "front"
+      summary: "申請"
+      description: "カートに追加したコンテンツ一覧のダウンロード申請に必要な項目を入力し、申請する"
+      operationId: "billing"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "billing_company"
+        in: "query"
+        required: true
+        type: "integer"
+        description: "社名（団体名・個人の場合はお名前）"
+      - name: "billing_industry"
+        in: "query"
+        required: true
+        type: "string"
+        description: "業種"
+      - name: "billing_charge"
+        in: "query"
+        required: true
+        type: "string"
+        description: "担当者名"
+      - name: "billing_city"
+        in: "query"
+        required: true
+        type: "string"
+        description: "住所（都道府県名・市町村名まで）"
+      - name: "billing_phone"
+        in: "query"
+        required: true
+        type: "string"
+        description: "電話"
+      - name: "billing_email"
+        in: "query"
+        required: true
+        type: "string"
+        description: "メールアドレス"
+      - name: "billing_use"
+        in: "query"
+        required: true
+        type: "string"
+        description: "使用素材・使用目的"
+      - name: "use_period"
+        in: "query"
+        required: true
+        type: "string"
+        description: "使用期間"
+      responses:
+        "200":
+          $ref: "#/definitions/SuccessResponse"
+        "400":
+          description: "不正な値を受け取った時のエラーメッセージをレスポンス"
+          schema:
+            type: "object"
+            properties:
+              result:
+                type: "string"
+                example: "社名（団体名・個人の場合はお名前）は必須です。"
+  /category:
+    get:
+      tags:
+      - "common"
+      summary: "IDでカテゴリーを検索"
+      description: "全カテゴリーのデータを返す"
+      operationId: "getCategory"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "category"
+        in: "path"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "成功レスポンス"
+          schema:
+            $ref: "#/definitions/Category"
+        "404":
+          description: "該当データなし"
+          schema:
+            $ref: "#/definitions/NotFoundResponse"
+definitions:
+  News:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+      name:
+        type: "string"
+      link:
+        type: "string"
+      date_at:
+        type: "string"
+        example: "2021-10-01"
+  Content:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+      sku:
+        type: "string"
+      name:
+        type: "string"
+      belong:
+        type: "string"
+      file_name:
+        type: "string"
+      genre_name1:
+        type: "string"
+      genre_name2:
+        type: "string"
+      genre_name3:
+        type: "string"
+      genre_name4:
+        type: "string"
+      season:
+        type: "string"
+      area1:
+        type: "string"
+      area2:
+        type: "string"
+      area3:
+        type: "string"
+      area4:
+        type: "string"
+      type:
+        type: "string"
+      tags:
+        type: "string"
+      height:
+        type: "string"
+      width:
+        type: "string"
+      data_size:
+        type: "string"
+      file_type:
+        type: "string"
+      page_view_count:
+        type: "string"
+      admin_publish_flg:
+        type: "boolean"
+      admin_read_flg:
+        type: "boolean"
+      admin_download_flg:
+        type: "boolean"
+      sub_admin_publish_flg:
+        type: "boolean"
+      sub_admin_read_flg:
+        type: "boolean"
+      sub_admin_download_flg:
+        type: "boolean"
+      publish_flg:
+        type: "boolean"
+      read_flg:
+        type: "boolean"
+      download_flg:
+        type: "boolean"
+      start_at:
+        type: "string"
+        example: "2021-10-01"
+      end_at:
+        type: "string"
+        example: "2021-10-01"
+      spare1:
+        type: "string"
+      spare2:
+        type: "string"
+      spare3:
+        type: "string"
+      memo:
+        type: "string"
+      remkars:
+        type: "string"
+      created_at:
+        type: "string"
+        example: "2021-10-01"
+      updated_at:
+        type: "string"
+        example: "2021-10-01"
+      created_user_id:
+        type: "integer"
+      updated_user_id:
+        type: "integer"
+  Category:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      name:
+        type: "string"
+        example: "name"
+      children:
+        type: "array"
+        items:
+          $ref: "#/definitions/Children"
+  Children:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      name:
+        type: "string"
+        example: "name"
+      children:
+        type: "array"
+        items:
+          $ref: "#/definitions/SubChildren"
+  SubChildren:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        example: 1
+      name:
+        type: "string"
+        example: "name"
+  SuccessResponse:
+    type: "object"
+    properties:
+      result:
+        type: "string"
+        example: "success"
+  NotFoundResponse:
+    type: "object"
+    properties:
+      result:
+       type: "string"
+       example: "該当データは存在しません。"
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
